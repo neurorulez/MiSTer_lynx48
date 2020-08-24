@@ -176,29 +176,12 @@ assign VIDEO_ARY = status[1] ? 8'd9  : 8'd3;
 
 `include "build_id.v" 
 localparam CONF_STR = {
-	"MyCore;;",
+	"Lynx48;;",
 	"-;",
 	"O1,Aspect ratio,4:3,16:9;",
-	"O2,TV Mode,NTSC,PAL;",
-	"O34,Noise,White,Red,Green,Blue;",
-	"-;",
-	"P1,Test Page 1;",
-	"P1-;",
-	"P1-, -= Options in page 1 =-;",
-	"P1-;",
-	"P1O5,Option 1-1,Off,On;",
-	"d0P1F1,BIN;",
-	"H0P1O6,Option 1-2,Off,On;",
-	"-;",
-	"P2,Test Page 2;",
-	"P2-;",
-	"P2-, -= Options in page 2 =-;",
-	"P2-;",
-	"P2S0,DSK;",
-	"P2O67,Option 2,1,2,3,4;",
-	"-;",
-	"-;",
-	"T0,Reset;",
+    "O23,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%;",
+   "-;",
+   "T0,Reset;",
 	"R0,Reset and close OSD;",
 	"V,v",`BUILD_DATE 
 };
@@ -206,14 +189,18 @@ localparam CONF_STR = {
 wire forced_scandoubler;
 wire  [1:0] buttons;
 wire [31:0] status;
-wire [10:0] ps2_key;
 
-hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
+//Keyboard Ps2
+wire        ps2_kbd_clk_out;
+wire        ps2_kbd_data_out;
+wire        ps2_kbd_clk_in;
+wire        ps2_kbd_data_in;
+
+hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(800)) hps_io
 (
 	.clk_sys(clk_sys),
 	.HPS_BUS(HPS_BUS),
 	.EXT_BUS(),
-	.gamma_bus(),
 
 	.conf_str(CONF_STR),
 	.forced_scandoubler(forced_scandoubler),
@@ -221,19 +208,24 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 	.buttons(buttons),
 	.status(status),
 	.status_menumask({status[5]}),
-	
-	.ps2_key(ps2_key)
-);
+	  //Keyboard Ps2
+   .ps2_kbd_clk_in(ps2_kbd_clk_in),
+   .ps2_kbd_data_in(ps2_kbd_data_in)
+
+	);
 
 
 ///////////////////////   CLOCKS   ///////////////////////////////
 
 wire clk_sys;
+wire pll_locked;
+
 pll pll
 (
 	.refclk(CLK_50M),
 	.rst(0),
-	.outclk_0(clk_sys)
+	.outclk_0(clk_sys),
+	.locked (pll_locked)
 );
 
 wire reset = RESET | status[0] | buttons[1];
@@ -246,39 +238,66 @@ wire HBlank;
 wire HSync;
 wire VBlank;
 wire VSync;
-wire ce_pix;
-wire [7:0] video;
+wire [8:0] video;
 
-mycore mycore
+lynx48 lynx48	
 (
-	.clk(clk_sys),
-	.reset(reset),
-	
-	.pal(status[2]),
-	.scandouble(forced_scandoubler),
+	.clock(clk_sys),
+	.reset(~reset),
+	.led (LED_USER),
 
-	.ce_pix(ce_pix),
-
-	.HBlank(HBlank),
-	.HSync(HSync),
-	.VBlank(VBlank),
-	.VSync(VSync),
-
-	.video(video)
+	.hSync(HSync),
+	.vSync(VSync),
+	.vBlank(VBlank),
+	.hBlank(HBlank),
+   .ps2({ps2_kbd_clk_in,ps2_kbd_data_in}),
+	.rgb(video)
 );
 
 assign CLK_VIDEO = clk_sys;
-assign CE_PIXEL = ce_pix;
 
-assign VGA_DE = ~(HBlank | VBlank);
-assign VGA_HS = HSync;
-assign VGA_VS = VSync;
-assign VGA_G  = (!col || col == 2) ? video : 8'd0;
-assign VGA_R  = (!col || col == 1) ? video : 8'd0;
-assign VGA_B  = (!col || col == 3) ? video : 8'd0;
+reg ce_pix;
 
-reg  [26:0] act_cnt;
-always @(posedge clk_sys) act_cnt <= act_cnt + 1'd1; 
-assign LED_USER    = act_cnt[26]  ? act_cnt[25:18]  > act_cnt[7:0]  : act_cnt[25:18]  <= act_cnt[7:0];
+
+always @(negedge clk_sys) begin
+        reg [3:0] div;
+
+        div <= div + 1'd1;
+        ce_pix <= !div[2:0];
+end
+
+
+video_mixer #(280, 1) mixer
+(
+		  
+        .clk_vid(CLK_VIDEO),
+
+        .ce_pix(ce_pix),
+        .ce_pix_out(CE_PIXEL),
+
+        .hq2x(scale == 1),
+        .scanlines(0),
+        .scandoubler (scale || forced_scandoubler),
+
+        .R(video[8:6]),
+        .G(video[5:3]),
+        .B(video[2:0]),
+
+        .mono(0),
+
+        .HSync(HSync),
+        .VSync(VSync),
+        .HBlank(HBlank),
+        .VBlank(VBlank),
+
+        .VGA_R(VGA_R),
+        .VGA_G(VGA_G),
+        .VGA_B(VGA_B),
+        .VGA_VS(VGA_VS),
+        .VGA_HS(VGA_HS),
+        .VGA_DE(VGA_DE)
+);
+
+
 
 endmodule
