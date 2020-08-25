@@ -5,18 +5,17 @@ module video
 	input  wire       clock,
 	input  wire       ce,
 	input  wire       altg,
+	output wire       int_n,
 	output wire[ 1:0] stdn,
 	output wire[ 1:0] sync,
+	output wire       hSync,
+	output wire       vSync,
+	output wire       hBlank,
+	output wire       vBlank,
 	output wire[ 8:0] rgb,
-	output wire hSync,
-	output wire vSync,
-	output wire hBlank,
-	output wire vBlank,
-	output wire videoBlank,
 	input  wire[ 7:0] d,
 	output wire[ 1:0] b,
 	output wire[12:0] a
-	
 );
 //-------------------------------------------------------------------------------------------------
 
@@ -84,17 +83,21 @@ end
 
 //-------------------------------------------------------------------------------------------------
 
-assign videoBlank = (hCount >= 320 && hCount <= 415) || (vCount >= 248 && vCount <= 255);
+wire videoBlank = (hCount >= 320 && hCount <= 415) || (vCount >= 248 && vCount <= 255);
+
 assign hSync = hCount >= 344 && hCount <= 375;
 assign vSync = vCount >= 260 && vCount <= 263;
 assign hBlank = hCount >= 320 && hCount <= 415;
 assign vBlank = vCount >= 248 && vCount <= 255;
+
 //-------------------------------------------------------------------------------------------------
+
+assign int_n = !(vCount == 248 && hCount >= 2 && hCount <= 65);
 
 assign stdn = 2'b01; // PAL
 assign sync = { 1'b1, ~(hSync|vSync) };
 assign rgb = videoBlank || !videoEnable ? 9'd0 : { {3{redOutput[7]}}, {3{blueOutput[7]}}, {3{altg ? greenxOutput[7] : greenOutput[7]}} };
-//assign rgb = videoBlank || !videoEnable ? 9'd0 : vCount == 0 || vCount == 247 ? 9'h1FF : { {3{redOutput[7]}}, {3{blueOutput[7]}}, {3{altg ? greenxOutput[7] : greenOutput[7]}} };
+
 assign b = hCount[2:1];
 assign a = { vCount[7:0], hCount[7:3] };
 

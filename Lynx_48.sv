@@ -157,13 +157,13 @@ assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
 assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
 assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;  
 
-assign VGA_SL = 0;
+//assign VGA_SL = 0;
 assign VGA_F1 = 0;
 
-assign AUDIO_S = 0;
-assign AUDIO_L = 0;
-assign AUDIO_R = 0;
-assign AUDIO_MIX = 0;
+//assign AUDIO_S = 0;
+//assign AUDIO_L = 0;
+//assign AUDIO_R = 0;
+//assign AUDIO_MIX = 0;
 
 assign LED_DISK = 0;
 assign LED_POWER = 0;
@@ -171,16 +171,16 @@ assign BUTTONS = 0;
 
 //////////////////////////////////////////////////////////////////
 
-assign VIDEO_ARX = status[1] ? 8'd16 : 8'd4;
-assign VIDEO_ARY = status[1] ? 8'd9  : 8'd3; 
+assign VIDEO_ARX = status[5] ? 8'd16 : 8'd4;
+assign VIDEO_ARY = status[5] ? 8'd9  : 8'd3; 
 
 `include "build_id.v" 
 localparam CONF_STR = {
 	"Lynx48;;",
 	"-;",
-	"O1,Aspect ratio,4:3,16:9;",
-    "O23,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%;",
-   "-;",
+	"O5,Aspect ratio,4:3,16:9;",
+   "O12,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%;",
+	"-;",
    "T0,Reset;",
 	"R0,Reset and close OSD;",
 	"V,v",`BUILD_DATE 
@@ -191,12 +191,10 @@ wire  [1:0] buttons;
 wire [31:0] status;
 
 //Keyboard Ps2
-wire        ps2_kbd_clk_out;
-wire        ps2_kbd_data_out;
-wire        ps2_kbd_clk_in;
-wire        ps2_kbd_data_in;
 
-hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(800)) hps_io
+wire [1:0] ps2;
+
+hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1103)) hps_io
 (
 	.clk_sys(clk_sys),
 	.HPS_BUS(HPS_BUS),
@@ -209,9 +207,10 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(800)) hps_io
 	.status(status),
 	.status_menumask({status[5]}),
 	  //Keyboard Ps2
-   .ps2_kbd_clk_in(ps2_kbd_clk_in),
-   .ps2_kbd_data_in(ps2_kbd_data_in)
+   .ps2_kbd_clk_out(ps2[0]),
+   .ps2_kbd_data_out(ps2[1]),
 
+	
 	);
 
 
@@ -243,31 +242,31 @@ wire [8:0] video;
 lynx48 lynx48	
 (
 	.clock(clk_sys),
-	.reset(~reset),
+	.reset_osd(~reset),
 	.led (LED_USER),
 
-	.hSync(HSync),
-	.vSync(VSync),
-	.vBlank(VBlank),
-	.hBlank(HBlank),
-   .ps2({ps2_kbd_clk_in,ps2_kbd_data_in}),
-	.rgb(video)
+	.hSync (HSync  ),
+	.vSync (VSync  ),
+	.vBlank(VBlank ),
+	.hBlank(HBlank ),
+	.ps2   (ps2    ),
+	.dacDo (AUDIO_L),
+	.ce_pix(ce_pix ),
+	.rgb   (video  )
 );
 
+
+assign AUDIO_R = AUDIO_L;
 assign CLK_VIDEO = clk_sys;
 
-reg ce_pix;
 
 
-always @(negedge clk_sys) begin
-        reg [3:0] div;
 
-        div <= div + 1'd1;
-        ce_pix <= !div[2:0];
-end
+wire [1:0] scale = status[2:1];
+assign VGA_SL = {scale == 3, scale == 2};
 
 
-video_mixer #(280, 1) mixer
+video_mixer #(448, 1) mixer
 (
 		  
         .clk_vid(CLK_VIDEO),
@@ -298,6 +297,19 @@ video_mixer #(280, 1) mixer
         .VGA_DE(VGA_DE)
 );
 
+/////////  EAR added by Fernando Mosquera
+wire tape_in;
+assign tape_in = tape_adc_act & tape_adc;
+
+wire tape_adc, tape_adc_act;
+ltc2308_tape ltc2308_tape
+(
+  .clk(CLK_50M),
+  .ADC_BUS(ADC_BUS),
+  .dout(tape_adc),
+  .active(tape_adc_act)
+);
+/////////////////////////
 
 
 endmodule
