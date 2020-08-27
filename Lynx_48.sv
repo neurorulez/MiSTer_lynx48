@@ -278,9 +278,8 @@ video_mixer #(448, 1) mixer
         .scanlines(0),
         .scandoubler (scale || forced_scandoubler),
 
-        .R(video[5:3]), 
-        .G(video[8:6]), 
-		  
+        .R(video[8:6]), 
+        .G(video[5:3]), 
         .B(video[2:0]),
 
         .mono(0),

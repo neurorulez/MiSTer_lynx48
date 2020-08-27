@@ -96,8 +96,7 @@ assign int_n = !(vCount == 248 && hCount >= 2 && hCount <= 65);
 
 assign stdn = 2'b01; // PAL
 assign sync = { 1'b1, ~(hSync|vSync) };
-assign rgb = videoBlank || !videoEnable ? 9'd0 : { {3{redOutput[7]}}, {3{blueOutput[7]}}, {3{altg ? greenxOutput[7] : greenOutput[7]}} };
-
+assign rgb = videoBlank || !videoEnable ? 9'd0 : { {3{redOutput[7]}}, {3{altg ? greenxOutput[7] : greenOutput[7]}}, {3{blueOutput[7]}} };
 assign b = hCount[2:1];
 assign a = { vCount[7:0], hCount[7:3] };
 

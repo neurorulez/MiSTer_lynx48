@@ -1,5 +1,6 @@
 //-------------------------------------------------------------------------------------------------
 // Linkx48: Lynx 48K implementation for ZX-Uno board by Kyp
+// 
 // https://github.com/Kyp069/lynx48
 //-------------------------------------------------------------------------------------------------
 // Z80 chip module implementation by Sorgelig
@@ -17,7 +18,6 @@ module lynx48
 	output wire      vBlank,
 	output wire[8:0] rgb,
    output wire      ce_pix,
-//	input  wire      ear,
 	output wire[10:0] dacDo,
 	input  wire       tape_in, 
 
@@ -71,7 +71,6 @@ cpu Cpu
 	.int_n  (int_n  ),
 	.mreq   (mreq   ),
 	.iorq   (iorq   ),
-	.rd     (rd     ),
 	.wr     (wr     ),
 	.di     (di     ),
 	.do     (do     ),
@@ -157,7 +156,7 @@ wire io80 = !(!iorq && !wr && a[7] && !a[6] && !a[2] && !a[1]);
 reg[6:2] reg80;
 reg motor;
 reg tape_bit;
-assign led=tape_in;
+assign led=~tape_in;
 always @(negedge reset, posedge  clock) if(!reset) reg80 <= 7'h0c; else if(ce4p) if(!io80)  begin
 																													      reg80 <= do[6:2];
 																														   motor <= do[1];
@@ -203,17 +202,6 @@ video Video
 	.a      (vmmA   )
 );
 
-//-------------------------------------------------------------------------------------------------
-
-//dac #(.MSBI(5)) Dac
-//(
-//	.reset  (reset  ),
-//	.clock  (clock  ),
-//	.di     (reg84  ),
-//	.do     (dacDo  )
-//);
-//
-//assign audio = {2{dacDo}};
 
 //-------------------------------------------------------------------------------------------------
 
@@ -254,13 +242,13 @@ assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
 //-------------------------------------------------------------------------------------------------
 
 assign di
-	= !mreq && !rd && !reg7F[4] && a[15:14] == 2'b00  ? romDo
-	: !mreq && !rd && !reg7F[4] && a[15:13] == 3'b010 ? 8'hFF
-	: !mreq && !rd && !reg7F[5] ? ramDo
-	: !mreq && !rd &&  reg7F[6] && !reg80[2] ? vrbDo2
-	: !mreq && !rd &&  reg7F[6] && !reg80[3] ? vggDo2
-	: !iorq && !rd &&  motor && a[7:0] == 8'h80 ? tape_bit
-	: !iorq && !rd &&  a[7:0] == 8'h80 ? keybDo
+	= !mreq && !reg7F[4] && a[15:14] == 2'b00  ? romDo
+	: !mreq && !reg7F[4] && a[15:13] == 3'b010 ? 8'hFF
+	: !mreq && !reg7F[5] ? ramDo
+	: !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
+	: !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
+	: !iorq &&  motor && a[7:0] == 8'h80 ? tape_bit
+	: !iorq &&  a[7:0] == 8'h80 ? keybDo
 	: 8'hFF;
 
 //-------------------------------------------------------------------------------------------------
