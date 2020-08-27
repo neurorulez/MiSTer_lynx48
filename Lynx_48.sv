@@ -150,7 +150,6 @@ module emu
 
 ///////// Default values for ports not used in this core /////////
 
-assign ADC_BUS  = 'Z;
 assign USER_OUT = '1;
 assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
@@ -251,6 +250,7 @@ lynx48 lynx48
 	.hBlank(HBlank ),
 	.ps2   (ps2    ),
 	.dacDo (AUDIO_L),
+	.tape_in (tape_in),
 	.ce_pix(ce_pix ),
 	.rgb   (video  )
 );
@@ -263,8 +263,8 @@ assign CLK_VIDEO = clk_sys;
 
 
 wire [1:0] scale = status[2:1];
-assign VGA_SL = {scale == 3, scale == 2};
-
+//assign VGA_SL = {scale == 3, scale == 2};
+assign VGA_SL = 0;
 
 video_mixer #(448, 1) mixer
 (
@@ -278,8 +278,9 @@ video_mixer #(448, 1) mixer
         .scanlines(0),
         .scandoubler (scale || forced_scandoubler),
 
-        .R(video[8:6]),
-        .G(video[5:3]),
+        .R(video[5:3]), 
+        .G(video[8:6]), 
+		  
         .B(video[2:0]),
 
         .mono(0),

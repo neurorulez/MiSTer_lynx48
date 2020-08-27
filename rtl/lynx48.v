@@ -19,6 +19,7 @@ module lynx48
    output wire      ce_pix,
 //	input  wire      ear,
 	output wire[10:0] dacDo,
+	input  wire       tape_in, 
 
 	input  wire[1:0] ps2
 );
@@ -55,7 +56,7 @@ wire ce4p = ~ce[0] & ~ce[1] &  ce[2];
 //-------------------------------------------------------------------------------------------------
 
 
-wire reset = reset_osd || reset_kbd;
+wire reset = reset_osd && reset_kbd;
 
 wire[ 7:0] di;
 wire[ 7:0] do;
@@ -154,14 +155,27 @@ always @(negedge reset, posedge clock) if(!reset) reg7F <= 1'd0; else if(ce4p) i
 wire io80 = !(!iorq && !wr && a[7] && !a[6] && !a[2] && !a[1]);
 
 reg[6:2] reg80;
-always @(negedge reset, posedge  clock) if(!reset) reg80 <= 1'd0; else if(ce4p) if(!io80) reg80 <= do[6:2];
+reg motor;
+reg tape_bit;
+assign led=tape_in;
+always @(negedge reset, posedge  clock) if(!reset) reg80 <= 7'h0c; else if(ce4p) if(!io80)  begin
+																													      reg80 <= do[6:2];
+																														   motor <= do[1];
+																														   tape_bit <= ~tape_in;
+																														  end
 
 //-------------------------------------------------------------------------------------------------
 
-wire io84 = !(!iorq && !wr && a[7] && !a[6] &&  a[2] && !a[1]);
 
+reg [10:0] audio;
+assign dacDo = audio;
+
+wire io84 = !(!iorq && !wr && a[7] && !a[6] &&  a[2] && !a[1]);
 reg[5:0] reg84;
-always @(posedge clock) if(ce4p) if(!io84) reg84 <= do[5:0];
+always @(posedge clock) if(ce4p) if(!io84) begin
+															reg84 <= do[5:0];
+															audio <= {2{do[5:0]}};
+														end
 
 //-------------------------------------------------------------------------------------------------
 
@@ -191,15 +205,15 @@ video Video
 
 //-------------------------------------------------------------------------------------------------
 
-dac #(.MSBI(5)) Dac
-(
-	.reset  (reset  ),
-	.clock  (clock  ),
-	.di     (reg84  ),
-	.do     (dacDo  )
-);
-
-assign audio = {2{dacDo}};
+//dac #(.MSBI(5)) Dac
+//(
+//	.reset  (reset  ),
+//	.clock  (clock  ),
+//	.di     (reg84  ),
+//	.do     (dacDo  )
+//);
+//
+//assign audio = {2{dacDo}};
 
 //-------------------------------------------------------------------------------------------------
 
@@ -245,6 +259,7 @@ assign di
 	: !mreq && !rd && !reg7F[5] ? ramDo
 	: !mreq && !rd &&  reg7F[6] && !reg80[2] ? vrbDo2
 	: !mreq && !rd &&  reg7F[6] && !reg80[3] ? vggDo2
+	: !iorq && !rd &&  motor && a[7:0] == 8'h80 ? tape_bit
 	: !iorq && !rd &&  a[7:0] == 8'h80 ? keybDo
 	: 8'hFF;
 

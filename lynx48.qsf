@@ -53,6 +53,7 @@ set_global_assignment -name SEED 1
 source sys/sys.tcl
 source sys/sys_analog.tcl
 source files.qip
+set_global_assignment -name VERILOG_FILE rtl/dac.v
 set_global_assignment -name VERILOG_FILE rtl/rom.v
 set_global_assignment -name CDF_FILE jtag.cdf
 set_global_assignment -name VERILOG_FILE rtl/video.v
@@ -64,7 +65,6 @@ set_global_assignment -name VERILOG_FILE rtl/lynx48.v
 set_global_assignment -name VERILOG_FILE rtl/lfsr.v
 set_global_assignment -name VERILOG_FILE rtl/keyboard.v
 set_global_assignment -name VERILOG_FILE rtl/dpr.v
-set_global_assignment -name VERILOG_FILE rtl/dac.v
 set_global_assignment -name VERILOG_FILE rtl/cpu.v
 set_global_assignment -name SYSTEMVERILOG_FILE rtl/cos.sv
 set_global_assignment -name VERILOG_FILE rtl/clock.v
