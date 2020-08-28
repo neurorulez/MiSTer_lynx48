@@ -86,7 +86,7 @@ end
 wire videoBlank = (hCount >= 320 && hCount <= 415) || (vCount >= 248 && vCount <= 255);
 
 assign hSync = hCount >= 344 && hCount <= 375;
-assign vSync = vCount >= 260 && vCount <= 263;
+assign vSync = vCount >= 272 && vCount <= 275;
 assign hBlank = hCount >= 320 && hCount <= 415;
 assign vBlank = vCount >= 248 && vCount <= 255;
 
