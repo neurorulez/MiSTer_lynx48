@@ -1,10 +1,9 @@
 //-------------------------------------------------------------------------------------------------
 // Linkx48: Lynx 48K implementation for ZX-Uno board by Kyp
-// 
+// MiSTer version by Yo_Me and rampa.
 // https://github.com/Kyp069/lynx48
 //-------------------------------------------------------------------------------------------------
 // Z80 chip module implementation by Sorgelig
-// https://github.com/sorgelig/ZX_Spectrum-128K_MIST
 //-------------------------------------------------------------------------------------------------
 module lynx48
 //-------------------------------------------------------------------------------------------------
@@ -18,18 +17,14 @@ module lynx48
 	output wire      vBlank,
 	output wire[8:0] rgb,
    output wire      ce_pix,
-	output wire[10:0] dacDo,
-	input  wire       tape_in, 
+	output wire[10:0] audio,
+	input  wire     ear, 
 
 	input  wire[1:0] ps2
 );
 //-------------------------------------------------------------------------------------------------
 
-//clock Clock
-//(
-//	.i      (clock50),
-//	.o      (clock  )
-//);
+
 
 assign ce_pix = ce;
 
@@ -43,15 +38,6 @@ wire ce8p = ~ce[0] &  ce[1];
 wire ce4n = ~ce[0] & ~ce[1] & ~ce[2];
 wire ce4p = ~ce[0] & ~ce[1] &  ce[2];
 
-//-------------------------------------------------------------------------------------------------
-
-//BUFG  Bufg (.I(ce[0]), .O(clockmb));
-//
-//multiboot Multiboot
-//(
-//    .clock  (clockmb),
-//    .reset  (boot   )
-//);
 
 //-------------------------------------------------------------------------------------------------
 
@@ -148,33 +134,29 @@ wire io7F = !(!iorq && !wr && a[6:0] == 7'h7F);
 
 reg[7:0] reg7F;
 always @(negedge reset, posedge clock) if(!reset) reg7F <= 1'd0; else if(ce4p) if(!io7F) reg7F <= do;
+	  
 
 //-------------------------------------------------------------------------------------------------
 
 wire io80 = !(!iorq && !wr && a[7] && !a[6] && !a[2] && !a[1]);
 
-reg[6:2] reg80;
+reg[5:2] reg80;
 reg motor;
-reg tape_bit;
-assign led=~tape_in;
-always @(negedge reset, posedge  clock) if(!reset) reg80 <= 7'h0c; else if(ce4p) if(!io80)  begin
-																													      reg80 <= do[6:2];
-																														   motor <= do[1];
-																														   tape_bit <= ~tape_in;
-																														  end
+reg speaker;
+
+always @(negedge reset, posedge  clock) if(!reset) reg80 <= 8'h0c; else if(ce4p) if(!io80) 
+   begin
+	   reg80 <= do[5:2];
+		motor <= do[1];
+		speaker <= do[0];
+	end
 
 //-------------------------------------------------------------------------------------------------
 
-
-reg [10:0] audio;
-assign dacDo = audio;
-
 wire io84 = !(!iorq && !wr && a[7] && !a[6] &&  a[2] && !a[1]);
+
 reg[5:0] reg84;
-always @(posedge clock) if(ce4p) if(!io84) begin
-															reg84 <= do[5:0];
-															audio <= {2{do[5:0]}};
-														end
+always @(posedge clock) if(ce4p) if(!io84) reg84 <= do[5:0];
 
 //-------------------------------------------------------------------------------------------------
 
@@ -218,8 +200,20 @@ keyboard Keyboard
 	.row    (keybRow),
 	.do     (keybDo )
 );
+//-------------------------------------------------------------------------------------------------
+
+audio Audio
+(
+        .clock  (clock  ),
+        .reset  (reset  ),
+        .ear    (!ear   ),
+        .dac    (reg84  ),
+        .audio  (audio  )
+);
 
 //-------------------------------------------------------------------------------------------------
+
+
 
 assign romA = { a[13], a[12:0] };
 
@@ -241,15 +235,18 @@ assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
 
 //-------------------------------------------------------------------------------------------------
 
+
 assign di
-	= !mreq && !reg7F[4] && a[15:14] == 2'b00  ? romDo
-	: !mreq && !reg7F[4] && a[15:13] == 3'b010 ? 8'hFF
-	: !mreq && !reg7F[5] ? ramDo
-	: !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
-	: !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
-	: !iorq &&  motor && a[7:0] == 8'h80 ? tape_bit
-	: !iorq &&  a[7:0] == 8'h80 ? keybDo
-	: 8'hFF;
+        = !mreq && !reg7F[4] && a[15:14] == 2'b00  ? romDo
+        : !mreq && !reg7F[4] && a[15:13] == 3'b010 ? 8'hFF
+        : !mreq && !reg7F[5] ? ramDo
+        : !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
+        : !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
+        : !iorq &&  a[7:0] == 8'h80 ? { keybDo[7:1], motor ? ear :keybDo[0]}
+        : 8'hFF;
+
+
+assign led=ear;
 
 //-------------------------------------------------------------------------------------------------
 endmodule

@@ -249,8 +249,8 @@ lynx48 lynx48
 	.vBlank(VBlank ),
 	.hBlank(HBlank ),
 	.ps2   (ps2    ),
-	.dacDo (AUDIO_L),
-	.tape_in (tape_in),
+	.audio (AUDIO_L),
+	.ear   (ear    ),
 	.ce_pix(ce_pix ),
 	.rgb   (video  )
 );
@@ -263,8 +263,8 @@ assign CLK_VIDEO = clk_sys;
 
 
 wire [1:0] scale = status[2:1];
-//assign VGA_SL = {scale == 3, scale == 2};
-assign VGA_SL = 0;
+assign VGA_SL = scale ; //{scale == 3, scale == 2};
+//assign VGA_SL = 0;
 
 video_mixer #(448, 1) mixer
 (
@@ -298,10 +298,9 @@ video_mixer #(448, 1) mixer
 );
 
 /////////  EAR added by Fernando Mosquera
-wire tape_in;
-assign tape_in = tape_adc_act & tape_adc;
+wire ear;
+assign ear = tape_adc_act & tape_adc;
 
-wire tape_adc, tape_adc_act;
 ltc2308_tape ltc2308_tape
 (
   .clk(CLK_50M),
