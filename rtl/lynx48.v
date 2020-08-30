@@ -20,12 +20,12 @@ module lynx48
 	output wire[10:0] audio,
 	input  wire     ear, 
    //
-	output reg[22:0] ram_addr,
-   output reg[7:0] ram_data_o,
+	output wire[22:0] ram_addr,
+   output wire[7:0] ram_data_o,
    input  wire[7:0] ram_data_i,
-   output reg ram_cs_o,
-   output reg ram_oe_o,
-   output reg ram_we_o,
+   output wire ram_cs_o,
+   output wire ram_oe_o,
+   output wire ram_we_o,
 	//
 	input  wire[1:0] ps2,
 	input  wire[5:0] joy,
@@ -95,19 +95,19 @@ rom #(.AW(15), .FN("96K-1+2+3.hex")) Rom_96
 	.a      (romA   )
 );
 
-wire[ 7:0] ramDi;
-wire[ 7:0] ramDo;
-wire[14:0] ramA;
+//wire[ 7:0] ramDi;
+//wire[ 7:0] ramDo;
+//wire[14:0] ramA;
 
-spr #(.AW(14)) Ram
-(
-	.clock  (clock  ),
-	.ce     (ce4p   ),
-	.we     (ramWe  ),
-	.di     (ramDi  ),
-	.do     (ramDo  ),
-	.a      (ramA   )
-);
+//spr #(.AW(14)) Ram
+//(
+//	.clock  (clock  ),
+//	.ce     (ce4p   ),
+//	.we     (ramWe  ),
+//	.di     (ramDi  ),
+//	.do     (ramDo  ),
+//	.a      (ramA   )
+//);
 
 //always @(posedge clock) begin
 //
@@ -246,9 +246,11 @@ audio Audio
 
 assign romA = (mode ? a[14:0] : a[13:0]);
 
-assign ramWe = !(!mreq && !wr && !reg7F[0]);
-assign ramDi = do;
-assign ramA = (mode ? { 5'b00000, a } : { 7'b0000000,  a[14], a[12:0] } );
+assign ram_we_o = !(!mreq && !wr && !reg7F[0]);
+assign ram_cs_o = 1`b1;
+assign ram_oe_o = !mreq && !reg7F[0];
+assign ram_data_o = do;
+assign ram_addr = (mode ? { 5'b00000, a } : { 7'b0000000,  a[14], a[12:0] } );
 
 
 
@@ -273,7 +275,7 @@ assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
 assign di
         = !mreq && !reg7F[4] && a[15:14] == 2'b00  ? mode ? romDo_96 : romDo_48
         : !mreq && !reg7F[4] && a[15:13] == 3'b010 ? 8'hFF
-        : !mreq && !reg7F[5] ? ramDo
+        : !mreq && !reg7F[5] ? ram_data_i
         : !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
         : !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
         : !iorq &&  a[7:0] == 8'h80 ? { keybDo[7:1], motor ? ear :keybDo[0]}

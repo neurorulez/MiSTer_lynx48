@@ -180,8 +180,6 @@ localparam CONF_STR = {
 	"O5,Aspect ratio,4:3,16:9;",
    "O12,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%;",
 	"-;",
-	"OD,Joysticks Swap,No,Yes;",
-	"-;",
 	"O3,Machine,Lynx 48K,Lynx 96k;",
    "T0,Reset;",
 	"R0,Reset and close OSD;",
@@ -195,7 +193,10 @@ wire mode = status[3];
 //Keyboard Ps2
 
 wire [1:0] ps2;
-wire [15:0] joy = status[13] ? joy_B : joy_A;
+wire [15:0]joystick_0;
+wire [15:0]joystick_1;
+
+wire [5:0] joy   =  (joystick_0[5:0] | joystick_1[5:0]);
 
 hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1103)) hps_io
 (
@@ -212,8 +213,8 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1103)) hps_io
 	  //Keyboard Ps2
    .ps2_kbd_clk_out(ps2[0]),
    .ps2_kbd_data_out(ps2[1]),
-	.joystick_0 (joy_A),
-	.joystick_1 (joy_B)
+	.joystick_0 (joystick_0),
+	.joystick_1 (joystick_1)
 	);
 
 
@@ -255,7 +256,7 @@ lynx48 lynx48
 	.vBlank(VBlank ),
 	.hBlank(HBlank ),
 	.ps2   (ps2    ),
-	.joy   (joy[5:0]),
+	.joy   (joy    ),
 	.audio (AUDIO_L),
 	.ear   (ear    ),
 	.ce_pix(ce_pix ),
