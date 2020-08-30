@@ -153,7 +153,7 @@ module emu
 assign USER_OUT = '1;
 assign {UART_RTS, UART_TXD, UART_DTR} = 0;
 assign {SD_SCK, SD_MOSI, SD_CS} = 'Z;
-assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
+//assign {SDRAM_DQ, SDRAM_A, SDRAM_BA, SDRAM_CLK, SDRAM_CKE, SDRAM_DQML, SDRAM_DQMH, SDRAM_nWE, SDRAM_nCAS, SDRAM_nRAS, SDRAM_nCS} = 'Z;
 assign {DDRAM_CLK, DDRAM_BURSTCNT, DDRAM_ADDR, DDRAM_DIN, DDRAM_BE, DDRAM_RD, DDRAM_WE} = '0;  
 
 //assign VGA_SL = 0;
@@ -180,6 +180,9 @@ localparam CONF_STR = {
 	"O5,Aspect ratio,4:3,16:9;",
    "O12,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%;",
 	"-;",
+	"OD,Joysticks Swap,No,Yes;",
+	"-;",
+	"O3,Machine,Lynx 48K,Lynx 96k;",
    "T0,Reset;",
 	"R0,Reset and close OSD;",
 	"V,v",`BUILD_DATE 
@@ -188,10 +191,11 @@ localparam CONF_STR = {
 wire forced_scandoubler;
 wire  [1:0] buttons;
 wire [31:0] status;
-
+wire mode = status[3];
 //Keyboard Ps2
 
 wire [1:0] ps2;
+wire [15:0] joy = status[13] ? joy_B : joy_A;
 
 hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1103)) hps_io
 (
@@ -208,8 +212,8 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1103)) hps_io
 	  //Keyboard Ps2
    .ps2_kbd_clk_out(ps2[0]),
    .ps2_kbd_data_out(ps2[1]),
-
-	
+	.joystick_0 (joy_A),
+	.joystick_1 (joy_B)
 	);
 
 
@@ -223,6 +227,8 @@ pll pll
 	.refclk(CLK_50M),
 	.rst(0),
 	.outclk_0(clk_sys),
+	.outclk_1(clk_sdram),
+	.outclk_2(clk_sdram_o),
 	.locked (pll_locked)
 );
 
@@ -249,10 +255,20 @@ lynx48 lynx48
 	.vBlank(VBlank ),
 	.hBlank(HBlank ),
 	.ps2   (ps2    ),
+	.joy   (joy[5:0]),
 	.audio (AUDIO_L),
 	.ear   (ear    ),
 	.ce_pix(ce_pix ),
-	.rgb   (video  )
+	//
+	.ram_addr       (ram_addr),
+   .ram_data_o     (ram_data_i),
+   .ram_data_i     (ram_data_o),
+   .ram_cs_o       (ram_cs_i),
+   .ram_oe_o       (ram_oe_i),
+   .ram_we_o       (ram_we_i),
+    //
+	.rgb            (video  ),
+	.mode           (mode)
 );
 
 
@@ -296,6 +312,36 @@ video_mixer #(448, 1) mixer
         .VGA_HS(VGA_HS),
         .VGA_DE(VGA_DE)
 );
+
+
+ssdram #(96) ssdram
+(
+  .clock_i    (clk_sdram),
+  .reset_i    (reset),
+  .refresh_i  (1'b1),
+  //
+  .addr_i     (ram_addr),
+  .data_i     (ram_data_i),
+  .data_o     (ram_data_o),
+  .cs_i       (ram_cs_i),
+  .oe_i       (ram_oe_i),
+  .we_i       (ram_we_i),
+  //
+  
+  .mem_cke_o  (SDRAM_CKE),
+  .mem_cs_n_o (SDRAM_nCS),
+  .mem_ras_n_o(SDRAM_nRAS),
+  .mem_cas_n_o(SDRAM_nCAS),
+  .mem_we_n_o (SDRAM_nWE),
+  .mem_udq_o  (SDRAM_DQMH),
+  .mem_ldq_o  (SDRAM_DQML),
+  .mem_ba_o   (SDRAM_BA),
+  .mem_addr_o (SDRAM_A),
+  .mem_data_io(SDRAM_DQ)
+  
+);
+assign SDRAM_CLK = clk_sdram_o;
+
 
 /////////  EAR added by Fernando Mosquera
 wire ear;

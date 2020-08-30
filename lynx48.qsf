@@ -53,6 +53,7 @@ set_global_assignment -name SEED 1
 source sys/sys.tcl
 source sys/sys_analog.tcl
 source files.qip
+set_global_assignment -name VHDL_FILE rtl/ssdram.vhd
 set_global_assignment -name VERILOG_FILE rtl/audio.v
 set_global_assignment -name VERILOG_FILE rtl/dac.v
 set_global_assignment -name VERILOG_FILE rtl/rom.v
