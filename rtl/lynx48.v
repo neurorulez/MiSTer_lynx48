@@ -267,14 +267,14 @@ assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
 assign di
         = !mreq && !reg7F[4] && a[15:14] == 2'b00  && mode == 0 ? romDo_48
         : !mreq && !reg7F[4] && a[15:13] == 3'b010 && mode == 0 ? 8'hFF
-		  : !mreq && !reg7F[4] && (a[15:14] == 2'b00 && mode == 1 || a[15:13] == 3'b010) ? romDo_96
-		  : !mreq && !reg7F[4] && (a[15:14] == 2'b00 && mode == 2 || a[15:13] == 3'b010) ? romDo_96s
+		  : (!mreq && !reg7F[4] && mode ==1 && a[15:14] == 2'b00 ) ||(mode ==1 &&a[15:13] == 3'b010)  ? romDo_96
+		  : (!mreq && !reg7F[4] && mode ==2 && a[15:14] == 2'b00 ) ||(mode ==2 &&a[15:13] == 3'b010) ? romDo_96s
         : !mreq && !reg7F[5] ? ramDo
         : !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
         : !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
         : !iorq &&  a[7:0] == 8'h80 ? { keybDo[7:1], motor ? ear :keybDo[0]}
 		  : !iorq &&  a[6:0] == 8'h7A ? { 2'b00, joy_0 }
-        : !iorq &&  a[6:0] == 8'h7A ? { 2'b00, joy_1 }
+        : !iorq &&  a[6:0] == 8'h7B ? { 2'b00, joy_1 }
         : 8'hFF;
 
 assign led=ear;

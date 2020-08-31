@@ -160,6 +160,9 @@ wire forced_scandoubler;
 wire [ 1:0] buttons;
 wire [31:0] status;
 wire [ 1:0] mode = status[4:3];
+wire [ 1:0] old_mode;
+
+
 
 //Keyboard Ps2
 
@@ -206,7 +209,11 @@ pll pll
 	.locked (pll_locked)
 );
 
-wire reset = RESET | status[0] | buttons[1];
+
+always @(posedge clk_sys) begin
+	old_mode <= mode;
+	reset <= (!pll_locked | status[0] | buttons[1] | old_mode != mode | RESET);
+end
 
 //////////////////////////////////////////////////////////////////
 
