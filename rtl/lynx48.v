@@ -267,8 +267,8 @@ assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
 assign di
         = !mreq && !reg7F[4] && a[15:14] == 2'b00  && mode == 2'b00 ? romDo_48
 		  : !mreq && !reg7F[4] && a[15:13] == 3'b010 && mode == 2'b00 ? 8'hFF 
-		  : (!mreq && !reg7F[4] && mode ==1 && a[15:14] == 2'b00 ) ||(mode ==1 &&a[15:13] == 3'b010)  ? romDo_96
-		  : (!mreq && !reg7F[4] && mode ==2 && a[15:14] == 2'b00 ) ||(mode ==2 &&a[15:13] == 3'b010) ? romDo_96s
+		  : (!mreq && !reg7F[4] && mode ==1 && a[15:14] == 2'b00 ) ||(mode ==1 && a[15:13] == 3'b010) ? romDo_96
+		  : (!mreq && !reg7F[4] && mode ==2 && a[15:14] == 2'b00 ) ||(mode ==2 && a[15:13] == 3'b010) ? romDo_96s
         : !mreq && !reg7F[5] ? ramDo
         : !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
         : !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
