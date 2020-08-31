@@ -99,7 +99,7 @@ rom #(.AW(15), .FN("96K-1+2+3s.hex")) Rom_96s
 
 wire[ 7:0] ramDi;
 wire[ 7:0] ramDo;
-wire[14:0] ramA;
+wire[15:0] ramA;
 
 spr #(.AW(16)) Ram
 (
@@ -242,7 +242,7 @@ assign romA = (mode != 2'b00 ? a[14:0] : a[13:0]);
 
 assign ramWe = !(!mreq && !wr && !reg7F[0]);
 assign ramDi = do;
-assign ramA = (mode != 2'b00 ? a  : { 2'b00,  a[14], a[12:0] } );
+assign ramA = mode == 2'b00 ? { 2'b00,  a[14], a[12:0] } : a ;
 
 
 
@@ -265,8 +265,8 @@ assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
 
 
 assign di
-        = !mreq && !reg7F[4] && a[15:14] == 2'b00  && mode == 0 ? romDo_48
-        : !mreq && !reg7F[4] && a[15:13] == 3'b010 && mode == 0 ? 8'hFF
+        = !mreq && !reg7F[4] && a[15:14] == 2'b00  && mode == 2'b00 ? romDo_48
+		  : !mreq && !reg7F[4] && a[15:13] == 3'b010 && mode == 2'b00 ? 8'hFF 
 		  : (!mreq && !reg7F[4] && mode ==1 && a[15:14] == 2'b00 ) ||(mode ==1 &&a[15:13] == 3'b010)  ? romDo_96
 		  : (!mreq && !reg7F[4] && mode ==2 && a[15:14] == 2'b00 ) ||(mode ==2 &&a[15:13] == 3'b010) ? romDo_96s
         : !mreq && !reg7F[5] ? ramDo
