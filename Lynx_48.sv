@@ -48,44 +48,13 @@ module emu
 	output        VGA_F1,
 	output [1:0]  VGA_SL,
 
-	/*
-	// Use framebuffer from DDRAM (USE_FB=1 in qsf)
-	// FB_FORMAT:
-	//    [2:0] : 011=8bpp(palette) 100=16bpp 101=24bpp 110=32bpp
-	//    [3]   : 0=16bits 565 1=16bits 1555
-	//    [4]   : 0=RGB  1=BGR (for 16/24/32 modes)
-	//
-	// FB_STRIDE either 0 (rounded to 256 bytes) or multiple of 16 bytes.
-	output        FB_EN,
-	output  [4:0] FB_FORMAT,
-	output [11:0] FB_WIDTH,
-	output [11:0] FB_HEIGHT,
-	output [31:0] FB_BASE,
-	output [13:0] FB_STRIDE,
-	input         FB_VBL,
-	input         FB_LL,
-	output        FB_FORCE_BLANK,
-
-	// Palette control for 8bit modes.
-	// Ignored for other video modes.
-	output        FB_PAL_CLK,
-	output  [7:0] FB_PAL_ADDR,
-	output [23:0] FB_PAL_DOUT,
-	input  [23:0] FB_PAL_DIN,
-	output        FB_PAL_WR,
-	*/
+	
 
 	output        LED_USER,  // 1 - ON, 0 - OFF.
 
-	// b[1]: 0 - LED status is system status OR'd with b[0]
-	//       1 - LED status is controled solely by b[0]
-	// hint: supply 2'b00 to let the system control the LED.
 	output  [1:0] LED_POWER,
 	output  [1:0] LED_DISK,
 
-	// I/O board button press simulation (active high)
-	// b[1]: user button
-	// b[0]: osd button
 	output  [1:0] BUTTONS,
 
 	input         CLK_AUDIO, // 24.576 MHz
@@ -180,23 +149,27 @@ localparam CONF_STR = {
 	"O5,Aspect ratio,4:3,16:9;",
    "O12,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%;",
 	"-;",
-	"O3,Machine,Lynx 48K,Lynx 96k;",
+	"O34,Machine,Lynx 48K,Lynx 96k,96k Scorpio;",
+	"OD,Joysticks Swap,No,Yes;",
    "T0,Reset;",
 	"R0,Reset and close OSD;",
 	"V,v",`BUILD_DATE 
 };
 
 wire forced_scandoubler;
-wire  [1:0] buttons;
+wire [ 1:0] buttons;
 wire [31:0] status;
-wire mode = status[3];
+wire [ 1:0] mode = status[4:3];
+
 //Keyboard Ps2
 
 wire [1:0] ps2;
 wire [15:0]joystick_0;
 wire [15:0]joystick_1;
 
-wire [5:0] joy   =  (joystick_0[5:0] | joystick_1[5:0]);
+wire [5:0] joy_0 = status[13] ? joystick_1[5:0] : joystick_0[5:0];
+wire [5:0] joy_1 = status[13] ? joystick_0[5:0] : joystick_1[5:0];
+
 
 hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1103)) hps_io
 (
@@ -256,18 +229,11 @@ lynx48 lynx48
 	.vBlank(VBlank ),
 	.hBlank(HBlank ),
 	.ps2   (ps2    ),
-	.joy   (joy    ),
+	.joy_0 (joy_0  ),
+	.joy_1 (joy_1  ),
 	.audio (AUDIO_L),
 	.ear   (ear    ),
 	.ce_pix(ce_pix ),
-	//
-	.ram_addr       (ram_addr),
-   .ram_data_o     (ram_data_i),
-   .ram_data_i     (ram_data_o),
-   .ram_cs_o       (ram_cs_i),
-   .ram_oe_o       (ram_oe_i),
-   .ram_we_o       (ram_we_i),
-    //
 	.rgb            (video  ),
 	.mode           (mode)
 );

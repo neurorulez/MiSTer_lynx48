@@ -20,18 +20,11 @@ module lynx48
 	output wire[10:0] audio,
 	input  wire     ear, 
    //
-	output wire[22:0] ram_addr,
-   output wire[7:0] ram_data_o,
-   input  wire[7:0] ram_data_i,
-   output wire ram_cs_o,
-   output wire ram_oe_o,
-   output wire ram_we_o,
-	//
 	input  wire[1:0] ps2,
-	input  wire[5:0] joy,
-
+	input  wire[5:0] joy_0,
+   input  wire[5:0] joy_1,
 	// 
-	input wire mode
+	input  wire[1:0] mode //0: lynx48k, 1: lynx96k, 2: lynx96k with scorpio rom
 );
 //-------------------------------------------------------------------------------------------------
 
@@ -77,6 +70,7 @@ cpu Cpu
 
 wire[ 7:0] romDo_48;
 wire[ 7:0] romDo_96;
+wire[ 7:0] romDo_96s;
 wire[14:0] romA;
 
 rom #(.AW(14), .FN("48K-1+2.hex")) Rom_48
@@ -95,29 +89,29 @@ rom #(.AW(15), .FN("96K-1+2+3.hex")) Rom_96
 	.a      (romA   )
 );
 
-//wire[ 7:0] ramDi;
-//wire[ 7:0] ramDo;
-//wire[14:0] ramA;
+rom #(.AW(15), .FN("96K-1+2+3s.hex")) Rom_96s
+(
+	.clock  (clock  ),
+	.ce     (ce4p   ),
+	.do     (romDo_96s),
+	.a      (romA   )
+);
 
-//spr #(.AW(14)) Ram
-//(
-//	.clock  (clock  ),
-//	.ce     (ce4p   ),
-//	.we     (ramWe  ),
-//	.di     (ramDi  ),
-//	.do     (ramDo  ),
-//	.a      (ramA   )
-//);
+wire[ 7:0] ramDi;
+wire[ 7:0] ramDo;
+wire[14:0] ramA;
 
-//always @(posedge clock) begin
-//
-// ram_addr <= ramA;
-// ram_data_o <= ramDi;
-// ramDo <= ram_data_i;
-// ram_we_o <= ramWe;
-// ram_cs_o <=  ce4p;
-// ram_oe_o <= 1'b1;
-//end
+spr #(.AW(16)) Ram
+(
+	.clock  (clock  ),
+	.ce     (ce4p   ),
+	.we     (ramWe  ),
+	.di     (ramDi  ),
+	.do     (ramDo  ),
+	.a      (ramA   )
+);
+
+
 
 wire[ 7:0] vrbDo1;
 wire[13:0] vrbA1;
@@ -244,13 +238,11 @@ audio Audio
 
 
 
-assign romA = (mode ? a[14:0] : a[13:0]);
+assign romA = (mode != 2'b00 ? a[14:0] : a[13:0]);
 
-assign ram_we_o = !(!mreq && !wr && !reg7F[0]);
-assign ram_cs_o = 1`b1;
-assign ram_oe_o = !mreq && !reg7F[0];
-assign ram_data_o = do;
-assign ram_addr = (mode ? { 5'b00000, a } : { 7'b0000000,  a[14], a[12:0] } );
+assign ramWe = !(!mreq && !wr && !reg7F[0]);
+assign ramDi = do;
+assign ramA = (mode != 2'b00 ? a  : { 2'b00,  a[14], a[12:0] } );
 
 
 
@@ -273,13 +265,16 @@ assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
 
 
 assign di
-        = !mreq && !reg7F[4] && a[15:14] == 2'b00  ? mode ? romDo_96 : romDo_48
-        : !mreq && !reg7F[4] && a[15:13] == 3'b010 ? 8'hFF
-        : !mreq && !reg7F[5] ? ram_data_i
+        = !mreq && !reg7F[4] && a[15:14] == 2'b00  && mode == 0 ? romDo_48
+        : !mreq && !reg7F[4] && a[15:13] == 3'b010 && mode == 0 ? 8'hFF
+		  : !mreq && !reg7F[4] && (a[15:14] == 2'b00 && mode == 1 || a[15:13] == 3'b010) ? romDo_96
+		  : !mreq && !reg7F[4] && (a[15:14] == 2'b00 && mode == 2 || a[15:13] == 3'b010) ? romDo_96s
+        : !mreq && !reg7F[5] ? ramDo
         : !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
         : !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
         : !iorq &&  a[7:0] == 8'h80 ? { keybDo[7:1], motor ? ear :keybDo[0]}
-		  : !iorq &&  a[6:0] == 8'h7A ? { 2'b00, joy }
+		  : !iorq &&  a[6:0] == 8'h7A ? { 2'b00, joy_0 }
+        : !iorq &&  a[6:0] == 8'h7A ? { 2'b00, joy_1 }
         : 8'hFF;
 
 assign led=ear;
