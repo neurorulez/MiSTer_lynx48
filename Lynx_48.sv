@@ -268,9 +268,9 @@ video_mixer #(448, 1) mixer
         .scanlines(0),
         .scandoubler (scale || forced_scandoubler),
 
-        .R(video[8:6]), 
-        .G(video[5:3]), 
-        .B(video[2:0]),
+        .R({video[8:6],video[8]}), 
+        .G({video[5:3],video[5]}), 
+        .B({video[2:0],video[2]}),
 
         .mono(0),
 
@@ -278,7 +278,6 @@ video_mixer #(448, 1) mixer
         .VSync(VSync),
         .HBlank(HBlank),
         .VBlank(VBlank),
-
         .VGA_R(VGA_R),
         .VGA_G(VGA_G),
         .VGA_B(VGA_B),
