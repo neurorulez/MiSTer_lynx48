@@ -18,13 +18,14 @@ module lynx48
 	output wire      crtcDe,
 	output wire[8:0] rgb,
    output wire      ce_pix,
-	output wire[10:0] audio,
-	input  wire     ear, 
+	output wire[10:0]audio,
+	input  wire      ear, 
    //
 	input  wire[1:0] ps2,
 	input  wire[5:0] joy_0,
    input  wire[5:0] joy_1,
 	// 
+	input  wire      cas_osd,
 	input  wire[1:0] mode //0: lynx48k, 1: lynx96k, 2: lynx96k with scorpio rom
 );
 //-------------------------------------------------------------------------------------------------
@@ -33,14 +34,10 @@ module lynx48
 
 assign ce_pix = ce600p;
 
-
-
 reg[5:0] ce = 0;
 always @(negedge clock) ce <= ce+1'd1;
 
 wire ce600p = ~ce[0] & ~ce[1] &  ce[2];
-wire ce600n = ~ce[0] & ~ce[1] & ~ce[2];
-wire ce150p = ~ce[0] & ~ce[1] & ~ce[2] & ~ce[3] &  ce[4];
 wire ce075p = ~ce[0] & ~ce[1] & ~ce[2] & ~ce[3] & ~ce[4] &  ce[5];
 
 reg[3:0] ce4 = 0;
@@ -48,6 +45,7 @@ always @(negedge clock) if(ce400p) ce4 <= 1'd0; else ce4 <= ce4+1'd1;
 
 wire ce400p = ce4[0] &  ce4[1]          &  ce4[3];
 wire ce400n = ce4[0] & ~ce4[1] & ce4[2] & ~ce4[3];
+
 
 
 
@@ -240,6 +238,7 @@ keyboard Keyboard
 	.ce     (ce600p   ),
 	.ps2    (ps2    ),
 	.reset  (reset_kbd),
+	.cas    (cas    ),
 	.boot   (boot   ),
 	.row    (keybRow),
 	.do     (keybDo )
@@ -287,8 +286,18 @@ assign vggDi2 = do;
 assign vggA2 = { a[14], a[12:0] };
 
 wire[12:0] vmmA = { crtcMa[10:5], crtcRa[1:0], crtcMa[4:0] };
-assign vduDi = vduB[1] ? (!reg80[3] ? vggDo1 : 8'h00) : (!reg80[2] ? vrbDo1 : 8'h00);
+//assign vduDi = vduB[1] ? (!reg80[3] ? vggDo1 : 8'h00) : (!reg80[2] ? vrbDo1 : 8'h00);
 
+reg casd;
+reg cas23;
+
+always @(posedge clock) if(ce600p)
+begin
+       casd <= cas || cas_osd;
+       if(casd && !cas) cas23 <= ~cas23;
+end
+
+assign vduDi = vduB[1] ? (!cas23 || !reg80[3] ? vggDo1 : 8'h00) : (!cas23 || !reg80[2] ? vrbDo1 : 8'h00);
 //-------------------------------------------------------------------------------------------------
 
 

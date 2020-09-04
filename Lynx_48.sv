@@ -150,6 +150,7 @@ localparam CONF_STR = {
    "O12,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%;",
 	"-;",
 	"O34,Machine,Lynx 48K,Lynx 96k,96k Scorpion;",
+	"06,Level 9 Videofix,Off,On;",
 	"OD,Joysticks Swap,No,Yes;",
    "T0,Reset;",
 	"R0,Reset and close OSD;",
@@ -227,23 +228,28 @@ wire [8:0] video;
 
 lynx48 lynx48	
 (
-	.clock(clk_sys),
+	.clock    (clk_sys),
 	.reset_osd(~reset),
-	.led (LED_USER),
+	.led      (LED_USER),
 
-	.hSync (HSync  ),
-	.vSync (VSync  ),
-	.vBlank(VBlank ),
-	.hBlank(HBlank ),
-	.crtcDe(crtcDe ),
-	.ps2   (ps2    ),
-	.joy_0 (~{1'b0,1'b0,joy_0[4],1'b0,joy_0[0],joy_0[1],joy_0[2],joy_0[3]} ),
-	.joy_1 (~{1'b0,1'b0,joy_1[4],1'b0,joy_1[0],joy_1[1],joy_1[2],joy_1[3]} ),
-	.audio (AUDIO_L),
-	.ear   (ear    ),
-	.ce_pix(ce_pix ),
-	.rgb            (video  ),
-	.mode           (mode)
+	.hSync    (HSync  ),
+	.vSync    (VSync  ),
+	.vBlank   (VBlank ),
+	.hBlank   (HBlank ),
+	.crtcDe   (crtcDe ),
+	.rgb      (video  ),
+	
+	.cas_osd  (status[6]),    
+	.ps2      (ps2    ),
+	.joy_0    (~{1'b0,1'b0,joy_0[4],1'b0,joy_0[0],joy_0[1],joy_0[2],joy_0[3]} ),
+	.joy_1    (~{1'b0,1'b0,joy_1[4],1'b0,joy_1[0],joy_1[1],joy_1[2],joy_1[3]} ),
+	
+	.audio    (AUDIO_L),
+	.ear      (ear    ),
+	
+	
+	.ce_pix   (ce_pix ),
+	.mode     (mode)
 );
 
 
