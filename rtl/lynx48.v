@@ -25,7 +25,6 @@ module lynx48
 	input  wire[5:0] joy_0,
    input  wire[5:0] joy_1,
 	// 
-	input  wire      cas_osd,
 	input  wire[1:0] mode //0: lynx48k, 1: lynx96k, 2: lynx96k with scorpio rom
 );
 //-------------------------------------------------------------------------------------------------
@@ -286,14 +285,13 @@ assign vggDi2 = do;
 assign vggA2 = { a[14], a[12:0] };
 
 wire[12:0] vmmA = { crtcMa[10:5], crtcRa[1:0], crtcMa[4:0] };
-//assign vduDi = vduB[1] ? (!reg80[3] ? vggDo1 : 8'h00) : (!reg80[2] ? vrbDo1 : 8'h00);
 
 reg casd;
 reg cas23;
 
 always @(posedge clock) if(ce600p)
 begin
-       casd <= cas || cas_osd;
+       casd <= cas;
        if(casd && !cas) cas23 <= ~cas23;
 end
 
