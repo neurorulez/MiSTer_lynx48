@@ -235,6 +235,7 @@ lynx48 lynx48
 	.vSync (VSync  ),
 	.vBlank(VBlank ),
 	.hBlank(HBlank ),
+	.crtcDe(crtcDe ),
 	.ps2   (ps2    ),
 	.joy_0 (~{1'b0,1'b0,joy_0[4],1'b0,joy_0[0],joy_0[1],joy_0[2],joy_0[3]} ),
 	.joy_1 (~{1'b0,1'b0,joy_1[4],1'b0,joy_1[0],joy_1[1],joy_1[2],joy_1[3]} ),

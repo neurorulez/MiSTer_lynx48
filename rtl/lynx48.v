@@ -15,6 +15,7 @@ module lynx48
 	output wire      vSync,
 	output wire      hBlank,
 	output wire      vBlank,
+	output wire      crtcDe,
 	output wire[8:0] rgb,
    output wire      ce_pix,
 	output wire[10:0] audio,
@@ -30,16 +31,24 @@ module lynx48
 
 
 
-assign ce_pix = ce;
-reg[2:0] ce;
+assign ce_pix = ce600p;
 
+
+
+reg[5:0] ce = 0;
 always @(negedge clock) ce <= ce+1'd1;
 
-wire ce8n = ~ce[0] & ~ce[1];
-wire ce8p = ~ce[0] &  ce[1];
+wire ce600p = ~ce[0] & ~ce[1] &  ce[2];
+wire ce600n = ~ce[0] & ~ce[1] & ~ce[2];
+wire ce150p = ~ce[0] & ~ce[1] & ~ce[2] & ~ce[3] &  ce[4];
+wire ce075p = ~ce[0] & ~ce[1] & ~ce[2] & ~ce[3] & ~ce[4] &  ce[5];
 
-wire ce4n = ~ce[0] & ~ce[1] & ~ce[2];
-wire ce4p = ~ce[0] & ~ce[1] &  ce[2];
+reg[3:0] ce4 = 0;
+always @(negedge clock) if(ce400p) ce4 <= 1'd0; else ce4 <= ce4+1'd1;
+
+wire ce400p = ce4[0] &  ce4[1]          &  ce4[3];
+wire ce400n = ce4[0] & ~ce4[1] & ce4[2] & ~ce4[3];
+
 
 
 //-------------------------------------------------------------------------------------------------
@@ -55,9 +64,9 @@ cpu Cpu
 (
 	.reset  (reset  ),
 	.clock  (clock  ),
-	.cep    (ce4p   ),
-	.cen    (ce4n   ),
-	.int_n  (int_n  ),
+	.cep    (ce400p ),
+	.cen    (ce400n ),
+	.int_n  (1),
 	.mreq   (mreq   ),
 	.iorq   (iorq   ),
 	.wr     (wr     ),
@@ -76,7 +85,7 @@ wire[14:0] romA;
 rom #(.AW(14), .FN("48K-1+2.hex")) Rom_48
 (
 	.clock  (clock  ),
-	.ce     (ce4p   ),
+	.ce     (ce400p   ),
 	.do     (romDo_48),
 	.a      (romA   )
 );
@@ -84,7 +93,7 @@ rom #(.AW(14), .FN("48K-1+2.hex")) Rom_48
 rom #(.AW(15), .FN("96K-1+2+3.hex")) Rom_96
 (
 	.clock  (clock  ),
-	.ce     (ce4p   ),
+	.ce     (ce400p   ),
 	.do     (romDo_96),
 	.a      (romA   )
 );
@@ -92,7 +101,7 @@ rom #(.AW(15), .FN("96K-1+2+3.hex")) Rom_96
 rom #(.AW(15), .FN("96K-1+2+3s.hex")) Rom_96s
 (
 	.clock  (clock  ),
-	.ce     (ce4p   ),
+	.ce     (ce400p   ),
 	.do     (romDo_96s),
 	.a      (romA   )
 );
@@ -104,7 +113,7 @@ wire[15:0] ramA;
 spr #(.AW(16)) Ram
 (
 	.clock  (clock  ),
-	.ce     (ce4p   ),
+	.ce     (ce400p   ),
 	.we     (ramWe  ),
 	.di     (ramDi  ),
 	.do     (ramDo  ),
@@ -122,10 +131,10 @@ wire[13:0] vrbA2;
 dpr #(.AW(14)) Vrb
 (
 	.clock  (clock  ),
-	.ce1    (ce8n   ),
+	.ce1    (ce600p ),
 	.do1    (vrbDo1 ),
 	.a1     (vrbA1  ),
-	.ce2    (ce4p   ),
+	.ce2    (ce400p ),
 	.we2    (vrbWe2 ),
 	.di2    (vrbDi2 ),
 	.do2    (vrbDo2 ),
@@ -141,10 +150,10 @@ wire[13:0] vggA2;
 dpr #(.AW(14)) Vgg
 (
 	.clock  (clock  ),
-	.ce1    (ce8n   ),
+	.ce1    (ce600p ),
 	.do1    (vggDo1 ),
 	.a1     (vggA1  ),
-	.ce2    (ce4p   ),
+	.ce2    (ce400p ),
 	.we2    (vggWe2 ),
 	.di2    (vggDi2 ),
 	.do2    (vggDo2 ),
@@ -156,59 +165,71 @@ dpr #(.AW(14)) Vgg
 wire io7F = !(!iorq && !wr && a[6:0] == 7'h7F);
 
 reg[7:0] reg7F;
-always @(negedge reset, posedge clock) if(!reset) reg7F <= 1'd0; else if(ce4p) if(!io7F) reg7F <= do;
+always @(negedge reset, posedge clock) if(!reset) reg7F <= 1'd0; else if(ce400p) if(!io7F) reg7F <= do;
 	  
 
 //-------------------------------------------------------------------------------------------------
 
 wire io80 = !(!iorq && !wr && a[7] && !a[6] && !a[2] && !a[1]);
 
-reg[5:2] reg80;
+reg[5:1] reg80;
 reg motor;
 reg speaker;
 
-always @(negedge reset, posedge  clock) if(!reset) reg80 <= 8'h0c; else if(ce4p) if(!io80) 
-   begin
-	   reg80 <= do[5:2];
-		motor <= do[1];
-		speaker <= do[0];
-	end
-
+always @(negedge reset, posedge  clock) if(!reset) reg80 <= 8'h0c; else if(ce400p) if(!io80) reg80 <= do[5:1];
+		
 //-------------------------------------------------------------------------------------------------
 
 wire io84 = !(!iorq && !wr && a[7] && !a[6] &&  a[2] && !a[1]);
 
 reg[5:0] reg84;
-always @(posedge clock) if(ce4p) if(!io84) reg84 <= do[5:0];
+always @(posedge clock) if(ce400p) if(!io84) reg84 <= do[5:0];
 
 //-------------------------------------------------------------------------------------------------
 
-wire altg = reg80[4];
 
-wire[ 7:0] vmmDi;
-wire[ 1:0] vmmB;
-wire[12:0] vmmA;
+wire crtcCs = !(!iorq && !wr && a[7] && !a[6] &&  a[2] && a[1]);
+wire crtcRs = a[0];
+wire crtcRw = wr;
 
-video Video
+wire[ 7:0] crtcDi = do;
+
+wire[13:0] crtcMa;
+wire[ 4:0] crtcRa;
+
+UM6845R Crtc
 (
-	.clock  (clock  ),
-	.ce     (ce8n   ),
-	.altg   (altg   ),
-	.stdn   (stdn   ),
-	.sync   (sync   ),
-	.hSync  (hSync  ),
-	.vSync  (vSync  ),
-	.hBlank (hBlank ),
-	.vBlank (vBlank ),
-	.rgb    (rgb    ),
-	.int_n  (int_n  ),
-	.d      (vmmDi  ),
-	.b      (vmmB   ),
-	.a      (vmmA   )
+        .TYPE   (1'b0   ),
+        .CLOCK  (clock  ),
+        .CLKEN  (ce075p ),
+        .nRESET (reset  ),
+        .ENABLE (1'b1   ),
+        .nCS    (crtcCs ),
+        .R_nW   (crtcRw ),
+        .RS     (crtcRs ),
+        .DI     (crtcDi ),
+        .DO     (       ),
+        .VSYNC  (vSync  ),
+        .HSYNC  (hSync  ),
+        .DE     (crtcDe ),
+		  .hBlank (hBlank ),   
+	     .vBlank (vBlank ),
+
+        .FIELD  (       ),
+        .CURSOR (cursor ),
+        .MA     (crtcMa ),
+        .RA     (crtcRa )
 );
 
 
+
+wire altg = reg80[4];
+wire[ 7:0] vduDi;
+wire[1:0] vduB;
+
+
 //-------------------------------------------------------------------------------------------------
+
 
 wire[3:0] keybRow = a[11:8];
 wire[7:0] keybDo;
@@ -216,12 +237,23 @@ wire[7:0] keybDo;
 keyboard Keyboard
 (
 	.clock  (clock  ),
-	.ce     (ce8p   ),
+	.ce     (ce600p   ),
 	.ps2    (ps2    ),
 	.reset  (reset_kbd),
 	.boot   (boot   ),
 	.row    (keybRow),
 	.do     (keybDo )
+);
+//-------------------------------------------------------------------------------------------------
+video Video
+(
+        .clock  (clock  ),
+        .ce     (ce600p ),
+        .de     (crtcDe ),
+        .altg   (altg   ),
+        .di     (vduDi  ),
+        .rgb    (rgb    ),
+        .b      (vduB   )
 );
 //-------------------------------------------------------------------------------------------------
 
@@ -244,22 +276,18 @@ assign ramWe = !(!mreq && !wr && !reg7F[0]);
 assign ramDi = do;
 assign ramA = mode == 2'b00 ? { 2'b00,  a[14], a[12:0] } : a ;
 
-
-
-//assign ramDi = do;
-//assign ramA = { a[14], a[12:0] };
-
-assign vrbA1 = { vmmB[0], vmmA };
+assign vrbA1 = { vduB[0], vmmA };
 assign vrbWe2 = !(!mreq && !wr && reg7F[1] && reg80[5]);
 assign vrbDi2 = do;
 assign vrbA2 = { a[14], a[12:0] };
 
-assign vggA1 = { vmmB[0], vmmA };
+assign vggA1 = { vduB[0], vmmA };
 assign vggWe2 = !(!mreq && !wr && reg7F[2] && reg80[5]);
 assign vggDi2 = do;
 assign vggA2 = { a[14], a[12:0] };
 
-assign vmmDi = vmmB[1] ? vggDo1 : vrbDo1;
+wire[12:0] vmmA = { crtcMa[10:5], crtcRa[1:0], crtcMa[4:0] };
+assign vduDi = vduB[1] ? (!reg80[3] ? vggDo1 : 8'h00) : (!reg80[2] ? vrbDo1 : 8'h00);
 
 //-------------------------------------------------------------------------------------------------
 
@@ -272,8 +300,8 @@ assign di
         : !mreq && !reg7F[5] ? ramDo
         : !mreq &&  reg7F[6] && !reg80[2] ? vrbDo2
         : !mreq &&  reg7F[6] && !reg80[3] ? vggDo2
-        : !iorq &&  a[7:0] == 8'h80 ? { keybDo[7:1], motor ? ear :keybDo[0]}
-		  : !iorq &&  a[6:0] == 8'h7A ? { 2'b00, joy_0 }
+		  : !iorq &&  a[7:0] == 8'h80 ? { keybDo[7:1], reg80[1] ? ear : keybDo[0] }
+        : !iorq &&  a[6:0] == 8'h7A ? { 2'b00, joy_0 }
         : !iorq &&  a[6:0] == 8'h7B ? { 2'b00, joy_1 }
         : 8'hFF;
 
