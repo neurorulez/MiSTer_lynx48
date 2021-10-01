@@ -18,6 +18,7 @@
 
 module emu
 (
+`ifndef CYCLONE
 	//Master input clock
 	input         CLK_50M,
 
@@ -115,6 +116,55 @@ module emu
 	output  [6:0] USER_OUT,
 
 	input         OSD_STATUS
+`else
+	input         CLK_50M,
+	output        LED_USER,
+
+	output  [7:0] VGA_R,
+	output  [7:0] VGA_G,
+	output  [7:0] VGA_B,
+	output        VGA_HS,
+	output        VGA_VS,
+	output        VGA_CLOCK, //RELOADED
+	output        VGA_BLANK = 1'b1, //RELOADED
+	output        AUDSG_L,
+	output        AUDSG_R,
+
+	output        SD_SCK,
+	output        SD_MOSI,
+	input         SD_MISO,
+	output        SD_CS,
+
+	output        SDRAM_CLK,
+	output        SDRAM_CKE,
+	output [12:0] SDRAM_A,
+	output  [1:0] SDRAM_BA,
+	inout  [15:0] SDRAM_DQ,
+	output        SDRAM_DQML,
+	output        SDRAM_DQMH,
+	output        SDRAM_nCS,
+	output        SDRAM_nCAS,
+	output        SDRAM_nRAS,
+	output        SDRAM_nWE,
+	
+	inout         PS2_CLK,
+	inout         PS2_DAT,
+`ifndef JOYDC
+	output        JOY_CLK,
+	output        JOY_LOAD,
+	input         JOY_DATA,
+	output        JOY_SELECT,
+`else
+	input	wire [5:0]JOYSTICK1,
+	input	wire [5:0]JOYSTICK2,
+	output        JOY_SELECT = 1'b1,
+`endif	
+	output        MCLK,
+	output        SCLK,
+	output        LRCLK,
+	output        SDIN,
+	output        STM_RST = 1'b0
+`endif	
 );
 
 ///////// Default values for ports not used in this core /////////
@@ -157,7 +207,12 @@ localparam CONF_STR = {
 	"V,v",`BUILD_DATE 
 };
 
+`ifndef CYCLONE
 wire forced_scandoubler;
+`else
+wire        forced_scandoubler=host_scandoubler; //Negado = VGA x defecto.
+`endif
+
 wire [ 1:0] buttons;
 wire [31:0] status;
 wire [ 1:0] mode = status[4:3];
@@ -168,13 +223,18 @@ wire [ 1:0] old_mode;
 //Keyboard Ps2
 
 wire [1:0] ps2;
+`ifndef JOYDC
 wire [15:0]joystick_0;
 wire [15:0]joystick_1;
+`else
+wire  [4:0] joystick_0 = ~JOYSTICK1[4:0];
+wire  [4:0] joystick_1 = ~JOYSTICK2[4:0];
+`endif
 
 wire [5:0] joy_0 = status[13] ? joystick_1[5:0] : joystick_0[5:0];
 wire [5:0] joy_1 = status[13] ? joystick_0[5:0] : joystick_1[5:0];
 
-
+`ifndef CYCLONE
 hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1103)) hps_io
 (
 	.clk_sys(clk_sys),
@@ -193,6 +253,74 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1103)) hps_io
 	.joystick_0 (joystick_0),
 	.joystick_1 (joystick_1)
 	);
+`else
+wire [7:0]R_OSD,G_OSD,B_OSD;
+wire host_scandoubler;
+wire [7:0]R_IN = ~(HBlank | VBlank) ? {video[8:6],3'b000} : 0;
+wire [7:0]G_IN = ~(HBlank | VBlank) ? {video[5:3],3'b000} : 0;
+wire [7:0]B_IN = ~(HBlank | VBlank) ? {video[2:0],3'b000} : 0;
+assign VGA_CLOCK = CLK_VIDEO;
+
+data_io data_io
+(
+	.clk(clk_sys),
+	.CLOCK_50(CLK_50M), //Para modulos de I2s y Joystick
+	
+	.debug(),
+	
+	.reset_n(locked),
+
+	.vga_hsync(~hsync),
+	.vga_vsync(~vsync),
+	
+	.red_i(R_IN),//{r,{3{i & r}}}),
+	.green_i(G_IN),//{g,{3{i & g}}}),
+	.blue_i(B_IN),//{b,{3{i & b}}}),
+	.red_o(R_OSD),
+	.green_o(G_OSD),
+	.blue_o(B_OSD),
+	
+	.ps2k_clk_in(PS2_CLK),
+	.ps2k_dat_in(PS2_DAT),
+	.ps2_key(ps2_key),
+	.host_scandoubler_disable(host_scandoubler),
+	
+`ifndef JOYDC
+	.JOY_CLK(JOY_CLK),
+	.JOY_LOAD(JOY_LOAD),
+	.JOY_DATA(JOY_DATA),
+	.JOY_SELECT(JOY_SELECT),
+	.joy1(joystick_0),
+	.joy2(joystick_1),
+`endif
+	.dac_MCLK(MCLK),
+	.dac_LRCK(LRCLK),
+	.dac_SCLK(SCLK),
+	.dac_SDIN(SDIN),
+	.sigma_L(AUDSG_L),
+	.sigma_R(AUDSG_R),
+	.L_data(AUDIO_L),
+	.R_data(AUDIO_R),
+	
+	.spi_miso(SD_MISO),
+	.spi_mosi(SD_MOSI),
+	.spi_clk(SD_SCK),
+	.spi_cs(SD_CS),
+
+	.img_mounted(img_mounted),
+	.img_size(img_size),
+
+	.status(status),
+	
+	.ioctl_ce(1'b1),
+	.ioctl_wr(ioctl_wr),
+	.ioctl_addr(ioctl_addr),
+	.ioctl_dout(ioctl_dout),
+	.ioctl_download(ioctl_download),
+	.ioctl_index(ioctl_index),
+	.ioctl_file_ext()
+);
+`endif
 
 
 ///////////////////////   CLOCKS   ///////////////////////////////
@@ -213,7 +341,7 @@ pll pll
 
 always @(posedge clk_sys) begin
 	old_mode <= mode;
-	reset <= (!pll_locked | status[0] | buttons[1] | old_mode != mode | RESET);
+	reset <= (!pll_locked | status[0] | buttons[1] | old_mode != mode);
 end
 
 //////////////////////////////////////////////////////////////////
@@ -273,11 +401,22 @@ video_mixer #(448, 1) mixer
         .hq2x(scale == 1),
         .scanlines(0),
         .scandoubler (scale || forced_scandoubler),
-
+		
+		`ifndef CYCLONE
         .R({video[8:6],video[8]}), 
         .G({video[5:3],video[5]}), 
         .B({video[2:0],video[2]}),
-
+		  .VGA_VS(VGA_VS),
+        .VGA_HS(VGA_HS),
+		`else
+		.R(R_OSD),
+		.G(G_OSD),
+		.B(B_OSD),
+		.VGA_DE(),
+		.VGA_HS(hsync_o),
+		.VGA_VS(vsync_o),
+		`endif
+		
         .mono(0),
 
         .HSync(HSync),
@@ -287,11 +426,22 @@ video_mixer #(448, 1) mixer
         .VGA_R(VGA_R),
         .VGA_G(VGA_G),
         .VGA_B(VGA_B),
-        .VGA_VS(VGA_VS),
-        .VGA_HS(VGA_HS),
         .VGA_DE(VGA_DE)
 );
 
+`ifdef CYCLONE
+reg hsync_o, vsync_o, csync_o, csync_en;
+
+csync csync_gen (.clk(CLK_VIDEO), .hsync(hsync_o), .vsync(vsync_o), .csync(csync_o));
+
+assign csync_en = !(scale || forced_scandoubler);
+assign VGA_VS = csync_en ? 1'b1     : ~vsync_o;
+assign VGA_HS = csync_en ? ~csync_o : ~hsync_o;
+
+	//assign VGA_VS = (VGA_EN | SW[3]) ? 1'bZ      : csync_en ? 1'b1 : ~vs1;
+	//assign VGA_HS = (VGA_EN | SW[3]) ? 1'bZ      : csync_en ? ~cs1 : ~hs1;
+
+`endif
 
 ssdram #(96) ssdram
 (
