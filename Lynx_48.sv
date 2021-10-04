@@ -129,7 +129,8 @@ module emu
 	output        VGA_BLANK = 1'b1, //RELOADED
 	output        AUDSG_L,
 	output        AUDSG_R,
-
+   input         AUDIO_IN,
+	
 	output        SD_SCK,
 	output        SD_MOSI,
 	input         SD_MISO,
@@ -267,7 +268,7 @@ data_io data_io
 	
 	.debug(),
 	
-	.reset_n(locked),
+	.reset_n(pll_locked),
 
 	.vga_hsync(~hsync),
 	.vga_vsync(~vsync),
@@ -371,7 +372,7 @@ lynx48 lynx48
 	.joy_1    (~{1'b0,1'b0,joy_1[4],1'b0,joy_1[0],joy_1[1],joy_1[2],joy_1[3]} ),
 	
 	.audio    (AUDIO_L),
-	.ear      (ear    ),
+	.ear      (ear   ),
 	
 	
 	.ce_pix   (ce_pix ),
@@ -472,8 +473,8 @@ assign SDRAM_CLK = clk_sdram_o;
 
 
 /////////  EAR added by Fernando Mosquera
-wire ear;
-assign ear = tape_adc_act & tape_adc;
+wire ear = AUDIO_IN;
+//assign ear = tape_adc_act & tape_adc;
 
 ltc2308_tape ltc2308_tape
 (
