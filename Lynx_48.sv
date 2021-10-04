@@ -423,9 +423,9 @@ video_mixer #(448, 0, 0) mixer
         .VSync(VSync),
         .HBlank(HBlank),
         .VBlank(VBlank),
-        .VGA_R(VGA_R),
-        .VGA_G(VGA_G),
-        .VGA_B(VGA_B),
+        .VGA_R(),//VGA_R),
+        .VGA_G(),//VGA_G),
+        .VGA_B(),//VGA_B),
         .VGA_DE(VGA_DE)
 );
 
@@ -438,6 +438,9 @@ assign csync_en = !(scale || forced_scandoubler);
 assign VGA_VS = csync_en ? 1'b1     : ~vsync_o;
 assign VGA_HS = csync_en ? ~csync_o : ~hsync_o;
 
+assign VGA_R = R_OSD;
+assign VGA_G = G_OSD;
+assign VGA_B = B_OSD;
 	//assign VGA_VS = (VGA_EN | SW[3]) ? 1'bZ      : csync_en ? 1'b1 : ~vs1;
 	//assign VGA_HS = (VGA_EN | SW[3]) ? 1'bZ      : csync_en ? ~cs1 : ~hs1;
 
