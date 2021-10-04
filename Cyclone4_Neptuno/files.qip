@@ -5,7 +5,8 @@
 # and other software and tools, and its AMPP partner logic 
 set_global_assignment -name VERILOG_FILE ../rtl/video.v
 set_global_assignment -name VERILOG_FILE ../rtl/spr.v
-set_global_assignment -name QIP_FILE ../rtl/pll.qip
+set_global_assignment -name VERILOG_FILE ../rtl/rom.v
+set_global_assignment -name QIP_FILE pll.qip
 set_global_assignment -name VERILOG_FILE ../rtl/mycore.v
 set_global_assignment -name VERILOG_FILE ../rtl/multiboot.v
 set_global_assignment -name VERILOG_FILE ../rtl/lynx48.v
@@ -16,6 +17,9 @@ set_global_assignment -name VERILOG_FILE ../rtl/dac.v
 set_global_assignment -name VERILOG_FILE ../rtl/cpu.v
 set_global_assignment -name SYSTEMVERILOG_FILE ../rtl/cos.sv
 set_global_assignment -name VERILOG_FILE ../rtl/clock.v
+set_global_assignment -name VERILOG_FILE ../rtl/UM6845R.v
+set_global_assignment -name VERILOG_FILE ../rtl/audio.v
+set_global_assignment -name VHDL_FILE ../rtl/ssdram.vhd
 set_global_assignment -name VHDL_FILE ../rtl/T80/T80pa.vhd
 set_global_assignment -name VHDL_FILE ../rtl/T80/T80_Reg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/T80/T80_Pack.vhd

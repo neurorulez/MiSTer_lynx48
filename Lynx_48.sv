@@ -330,12 +330,12 @@ wire pll_locked;
 
 pll pll
 (
-	.refclk(CLK_50M),
-	.rst(0),
-	.outclk_0(clk_sys),
-	.outclk_1(clk_sdram),
-	.outclk_2(clk_sdram_o),
-	.locked (pll_locked)
+	.inclk0(CLK_50M),
+	.areset(0),
+	.c0(clk_sys),
+	.c1(clk_sdram),
+	.c2(clk_sdram_o),
+	.locked(pll_locked)
 );
 
 
