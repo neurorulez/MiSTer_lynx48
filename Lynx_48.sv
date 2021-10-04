@@ -221,8 +221,7 @@ wire [ 1:0] old_mode;
 
 
 //Keyboard Ps2
-
-wire [1:0] ps2;
+wire [1:0] ps2 = {PS2_DAT,PS2_CLK};
 `ifndef JOYDC
 wire [15:0]joystick_0;
 wire [15:0]joystick_1;
