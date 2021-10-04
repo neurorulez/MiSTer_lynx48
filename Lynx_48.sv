@@ -390,7 +390,7 @@ wire [1:0] scale = status[2:1];
 assign VGA_SL = scale ; //{scale == 3, scale == 2};
 //assign VGA_SL = 0;
 
-video_mixer #(448, 1) mixer
+video_mixer #(448, 0, 0) mixer
 (
 		  
         .clk_vid(CLK_VIDEO),
