@@ -473,7 +473,7 @@ assign SDRAM_CLK = clk_sdram_o;
 
 
 /////////  EAR added by Fernando Mosquera
-wire ear = AUDIO_IN;
+wire ear = ~AUDIO_IN;
 //assign ear = tape_adc_act & tape_adc;
 
 ltc2308_tape ltc2308_tape
