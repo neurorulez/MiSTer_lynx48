@@ -270,8 +270,8 @@ data_io data_io
 	
 	.reset_n(pll_locked),
 
-	.vga_hsync(~hsync),
-	.vga_vsync(~vsync),
+	.vga_hsync(~HSync),
+	.vga_vsync(~VSync),
 	
 	.red_i(R_IN),//{r,{3{i & r}}}),
 	.green_i(G_IN),//{g,{3{i & g}}}),
@@ -299,8 +299,8 @@ data_io data_io
 	.dac_SDIN(SDIN),
 	.sigma_L(AUDSG_L),
 	.sigma_R(AUDSG_R),
-	.L_data(AUDIO_L),
-	.R_data(AUDIO_R),
+	.L_data({AUDIO_L,5'b00000}),
+	.R_data({AUDIO_R,5'b00000}),
 	
 	.spi_miso(SD_MISO),
 	.spi_mosi(SD_MOSI),
@@ -423,9 +423,9 @@ video_mixer #(448, 0, 0) mixer
         .VSync(VSync),
         .HBlank(HBlank),
         .VBlank(VBlank),
-        .VGA_R(),//VGA_R),
-        .VGA_G(),//VGA_G),
-        .VGA_B(),//VGA_B),
+        .VGA_R(VGA_R),
+        .VGA_G(VGA_G),
+        .VGA_B(VGA_B),
         .VGA_DE(VGA_DE)
 );
 
@@ -438,9 +438,6 @@ assign csync_en = !(scale || forced_scandoubler);
 assign VGA_VS = csync_en ? 1'b1     : ~vsync_o;
 assign VGA_HS = csync_en ? ~csync_o : ~hsync_o;
 
-assign VGA_R = R_OSD;
-assign VGA_G = G_OSD;
-assign VGA_B = B_OSD;
 	//assign VGA_VS = (VGA_EN | SW[3]) ? 1'bZ      : csync_en ? 1'b1 : ~vs1;
 	//assign VGA_HS = (VGA_EN | SW[3]) ? 1'bZ      : csync_en ? ~cs1 : ~hs1;
 
