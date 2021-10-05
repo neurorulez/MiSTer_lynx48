@@ -256,9 +256,9 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1103)) hps_io
 `else
 wire [7:0]R_OSD,G_OSD,B_OSD;
 wire host_scandoubler;
-wire [7:0]R_IN = ~(HBlank | VBlank) ? {video[8:6],3'b000} : 0;
-wire [7:0]G_IN = ~(HBlank | VBlank) ? {video[5:3],3'b000} : 0;
-wire [7:0]B_IN = ~(HBlank | VBlank) ? {video[2:0],3'b000} : 0;
+wire [7:0]R_IN = ~(HBlank | VBlank) ? {video[8:6],5'b00000} : 0;
+wire [7:0]G_IN = ~(HBlank | VBlank) ? {video[5:3],5'b00000} : 0;
+wire [7:0]B_IN = ~(HBlank | VBlank) ? {video[2:0],5'b00000} : 0;
 assign VGA_CLOCK = CLK_VIDEO;
 
 data_io data_io
