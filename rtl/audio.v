@@ -1,31 +1,20 @@
 //-------------------------------------------------------------------------------------------------
+// Lynx: Lynx 48K/96K/96Kscorpion implementation by Kyp
+// https://github.com/Kyp069/lynx
+//-------------------------------------------------------------------------------------------------
 module audio
 //-------------------------------------------------------------------------------------------------
 (
-	input  wire      clock,
-	input  wire      reset,
-	input  wire      ear,
-	input  wire[5:0] dac,
-	output wire[10:0] audio
+	input  wire       clock,
+	input  wire       reset,
+	input  wire       tape,
+	input  wire [5:0] dac,
+	output wire [9:0] q
 );
 //-------------------------------------------------------------------------------------------------
 
-reg source;
-always @(posedge clock) source <= ~source;
-
-wire[5:0] mix = source ? {6{ear}} : dac;
-
-//-------------------------------------------------------------------------------------------------
-
-//dac #(.MSBI(5)) Dac
-//(
-//	.clock(clock  ),
-//	.reset(reset  ),
-//	.di   (mix    ),
-//	.do   (dacDo  )
-//);
-
-assign audio = {2{mix}};
+wire[9:0] mix = { 2'b00, {6{tape}} } + { 2'b00, dac };
+assign q = mix;
 
 //-------------------------------------------------------------------------------------------------
 endmodule

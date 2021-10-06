@@ -260,9 +260,9 @@ audio Audio
 (
         .clock  (clock  ),
         .reset  (reset  ),
-        .ear    (!ear   ),
+        .tape   (!ear   ),
         .dac    (reg84  ),
-        .audio  (audio  )
+        .q      (audio  )  //.audio  (audio  )
 );
 
 //-------------------------------------------------------------------------------------------------
