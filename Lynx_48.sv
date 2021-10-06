@@ -386,7 +386,7 @@ assign CLK_VIDEO = clk_sys;
 dac #(.MSBI(9)) Dac
 (
 	.clock(CLK_50M ),
-	.reset(reset  ),
+	.reset(~reset  ),
 	.d    (AUDIO_DAC ),
 	.q    (AUDSG_L   )
 );
