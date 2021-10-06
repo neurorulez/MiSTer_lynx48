@@ -18,8 +18,7 @@ module lynx48
 	output wire      crtcDe,
 	output wire[8:0] rgb,
    output wire      ce_pix,
-	//output wire[10:0]audio,
-	output wire      audio,
+	output wire[10:0] audio,
 	input  wire      ear, 
    //
 	input  wire[1:0] ps2,
@@ -261,9 +260,9 @@ audio Audio
 (
         .clock  (clock  ),
         .reset  (reset  ),
-        .tape   (!ear   ), //.ear    (!ear   ),
+        .ear    (!ear   ),
         .dac    (reg84  ),
-        .q      (audio  ) //.audio  (audio  )
+        .audio  (audio  )
 );
 
 //-------------------------------------------------------------------------------------------------

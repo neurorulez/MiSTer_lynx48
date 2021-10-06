@@ -256,6 +256,7 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .PS2DIV(1103)) hps_io
 `else
 wire [7:0]R_OSD,G_OSD,B_OSD;
 wire host_scandoubler;
+wire [10:0] AUDIO_DAC;
 wire [7:0]R_IN = ~(HBlank | VBlank) ? {video[8:6],5'b00000} : 0;
 wire [7:0]G_IN = ~(HBlank | VBlank) ? {video[5:3],5'b00000} : 0;
 wire [7:0]B_IN = ~(HBlank | VBlank) ? {video[2:0],5'b00000} : 0;
@@ -371,7 +372,7 @@ lynx48 lynx48
 	.joy_0    (~{1'b0,1'b0,joy_0[4],1'b0,joy_0[0],joy_0[1],joy_0[2],joy_0[3]} ),
 	.joy_1    (~{1'b0,1'b0,joy_1[4],1'b0,joy_1[0],joy_1[1],joy_1[2],joy_1[3]} ),
 	
-	.audio    (AUDSG_L),//AUDIO_L),
+	.audio    (AUDIO_DAC),//AUDIO_L),
 	.ear      (ear   ),
 	
 	
@@ -379,11 +380,17 @@ lynx48 lynx48
 	.mode     (mode)
 );
 
-assign AUDSG_R = AUDSG_L;
 //assign AUDIO_R = AUDIO_L;
 assign CLK_VIDEO = clk_sys;
 
-
+dac #(.MSBI(9)) Dac
+(
+	.clock(CLK_50M ),
+	.reset(reset  ),
+	.d    (AUDIO_DAC ),
+	.q    (AUDSG_L   )
+);
+assign AUDSG_R = AUDSG_L;
 
 
 wire [1:0] scale = status[2:1];
