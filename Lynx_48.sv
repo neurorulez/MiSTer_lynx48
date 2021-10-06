@@ -293,14 +293,14 @@ data_io data_io
 	.joy1(joystick_0),
 	.joy2(joystick_1),
 `endif
-	.dac_MCLK(MCLK),
-	.dac_LRCK(LRCLK),
-	.dac_SCLK(SCLK),
-	.dac_SDIN(SDIN),
-	.sigma_L(AUDSG_L),
-	.sigma_R(AUDSG_R),
-	.L_data({AUDIO_L,5'b00000}),
-	.R_data({AUDIO_R,5'b00000}),
+	.dac_MCLK(),//MCLK),
+	.dac_LRCK(),//LRCLK),
+	.dac_SCLK(),//SCLK),
+	.dac_SDIN(),//SDIN),
+	.sigma_L(),//AUDSG_L),
+	.sigma_R(),//AUDSG_R),
+	.L_data(),//{AUDIO_L,5'b00000}),
+	.R_data(),//{AUDIO_R,5'b00000}),
 	
 	.spi_miso(SD_MISO),
 	.spi_mosi(SD_MOSI),
@@ -371,7 +371,7 @@ lynx48 lynx48
 	.joy_0    (~{1'b0,1'b0,joy_0[4],1'b0,joy_0[0],joy_0[1],joy_0[2],joy_0[3]} ),
 	.joy_1    (~{1'b0,1'b0,joy_1[4],1'b0,joy_1[0],joy_1[1],joy_1[2],joy_1[3]} ),
 	
-	.audio    (AUDIO_L),
+	.audio    (AUDSG_L),//AUDIO_L),
 	.ear      (ear   ),
 	
 	
@@ -379,8 +379,8 @@ lynx48 lynx48
 	.mode     (mode)
 );
 
-
-assign AUDIO_R = AUDIO_L;
+assign AUDSG_R = AUDSG_L;
+//assign AUDIO_R = AUDIO_L;
 assign CLK_VIDEO = clk_sys;
 
 

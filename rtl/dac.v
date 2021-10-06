@@ -23,8 +23,8 @@ module dac #
 (
 	input  wire         clock,
 	input  wire         reset,
-	input  wire[MSBI:0] di,    // DAC input (excess 2**MSBI)
-	output reg          do     // This is the average output that feeds low pass filter
+	input  wire[MSBI:0] d,     // DAC input (excess 2**MSBI)
+	output reg          q      // This is the average output that feeds low pass filter
 );                             // for optimum performance, ensure that this ff is in IOB
 
 reg[MSBI+2:0] DeltaAdder;      // Output of Delta adder
@@ -33,19 +33,19 @@ reg[MSBI+2:0] SigmaLatch;      // Latches output of Sigma adder
 reg[MSBI+2:0] DeltaB;          // B input of Delta adder
 
 always @(SigmaLatch) DeltaB <= { SigmaLatch[MSBI+2], SigmaLatch[MSBI+2] } << (MSBI+1);
-always @(di or DeltaB) DeltaAdder <= di+DeltaB;
+always @(d or DeltaB) DeltaAdder <= d+DeltaB;
 always @(DeltaAdder or SigmaLatch) SigmaAdder <= DeltaAdder+SigmaLatch;
 always @(posedge clock)
 begin
 	if(!reset)
 	begin
 		SigmaLatch <= #1 1'b1 << (MSBI+1);
-		do <= #1 1'b0;
+		q <= #1 1'b0;
 	end
 	else
 	begin
 		SigmaLatch <= #1 SigmaAdder;
-		do <= #1 SigmaLatch[MSBI+2];
+		q <= #1 SigmaLatch[MSBI+2];
 	end
 end
 
