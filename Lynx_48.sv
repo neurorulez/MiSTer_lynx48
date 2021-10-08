@@ -294,14 +294,14 @@ data_io data_io
 	.joy1(joystick_0),
 	.joy2(joystick_1),
 `endif
-	.dac_MCLK(),//MCLK),
-	.dac_LRCK(),//LRCLK),
-	.dac_SCLK(),//SCLK),
-	.dac_SDIN(),//SDIN),
-	.sigma_L(),//AUDSG_L),
-	.sigma_R(),//AUDSG_R),
-	.L_data(),//{AUDIO_L,5'b00000}),
-	.R_data(),//{AUDIO_R,5'b00000}),
+	.dac_MCLK(MCLK),
+	.dac_LRCK(LRCLK),
+	.dac_SCLK(SCLK),
+	.dac_SDIN(SDIN),
+	.sigma_L(AUDSG_L),
+	.sigma_R(AUDSG_R),
+	.L_data({AUDIO_DAC,5'b00000}),
+	.R_data({AUDIO_DAC,5'b00000}),
 	
 	.spi_miso(SD_MISO),
 	.spi_mosi(SD_MOSI),
@@ -382,7 +382,7 @@ lynx48 lynx48
 
 //assign AUDIO_R = AUDIO_L;
 assign CLK_VIDEO = clk_sys;
-
+/*
 dac #(.MSBI(9)) Dac
 (
 	.clock(CLK_50M ),
@@ -391,7 +391,7 @@ dac #(.MSBI(9)) Dac
 	.q    (AUDSG_L   )
 );
 assign AUDSG_R = AUDSG_L;
-
+*/
 
 wire [1:0] scale = status[2:1];
 assign VGA_SL = scale ; //{scale == 3, scale == 2};
